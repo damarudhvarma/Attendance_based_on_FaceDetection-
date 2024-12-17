@@ -1,2 +1,3 @@
 myvenv/
-data
+data/
+attendance.db

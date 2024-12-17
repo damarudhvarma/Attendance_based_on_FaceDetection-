@@ -25,7 +25,7 @@ class Face_Register:
         self.win.title("Face Register")
 
         # PLease modify window size here if needed
-        self.win.geometry("1000x500")
+        self.win.geometry("1300x650")
 
         # GUI left part
         self.frame_left_camera = tk.Frame(self.win)
@@ -38,6 +38,7 @@ class Face_Register:
         self.label_cnt_face_in_database = tk.Label(self.frame_right_info, text=str(self.existing_faces_cnt))
         self.label_fps_info = tk.Label(self.frame_right_info, text="")
         self.input_name = tk.Entry(self.frame_right_info)
+        self.input_section_name = tk.Entry(self.frame_right_info)
         self.input_name_char = ""
         self.label_warning = tk.Label(self.frame_right_info)
         self.label_face_cnt = tk.Label(self.frame_right_info, text="Faces in current frame: ")
@@ -49,6 +50,7 @@ class Face_Register:
 
         self.path_photos_from_camera = "data/data_faces_from_camera/"
         self.current_face_dir = ""
+        self.section_folder_path=""
         self.font = cv2.FONT_ITALIC
 
         # Current frame and face ROI position
@@ -87,61 +89,83 @@ class Face_Register:
         self.existing_faces_cnt = 0
         self.log_all["text"] = "Face images and `features_all.csv` removed!"
 
+
+    def GUI_get_section_name(self):
+        self.section_name = self.input_section_name.get()
+        if self.section_name:
+            self.section_folder_path = os.path.join(self.path_photos_from_camera, self.section_name)
+            os.makedirs(self.section_folder_path, exist_ok=True)
+            self.section_folder_created_flag = True
+            self.log_all["text"] = f"Section folder '{self.section_folder_path}' created!"
+            # self.current_face_dir= self.section_folder_path
+        else:
+            self.log_all["text"] = "Section name cannot be empty!"    
+
     def GUI_get_input_name(self):
         self.input_name_char = self.input_name.get()
         self.create_face_folder()
         self.label_cnt_face_in_database['text'] = str(self.existing_faces_cnt)
 
     def GUI_info(self):
+    # Title Label
         tk.Label(self.frame_right_info,
-                 text="Face register",
-                 font=self.font_title).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=2, pady=20)
+                text="Face register",
+                font=self.font_title).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=2, pady=20)
 
+        # FPS Info
         tk.Label(self.frame_right_info, text="FPS: ").grid(row=1, column=0, sticky=tk.W, padx=5, pady=2)
         self.label_fps_info.grid(row=1, column=1, sticky=tk.W, padx=5, pady=2)
 
+        # Faces in database Info
         tk.Label(self.frame_right_info, text="Faces in database: ").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
         self.label_cnt_face_in_database.grid(row=2, column=1, sticky=tk.W, padx=5, pady=2)
 
-        tk.Label(self.frame_right_info,
-                 text="Faces in current frame: ").grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=5, pady=2)
-        self.label_face_cnt.grid(row=3, column=2, columnspan=3, sticky=tk.W, padx=5, pady=2)
+        # Faces in current frame Info
+        tk.Label(self.frame_right_info, text="Faces in current frame: ").grid(row=3, column=0, sticky=tk.W, padx=5, pady=2)
+        self.label_face_cnt.grid(row=3, column=1, sticky=tk.W, padx=5, pady=2)
 
+        # Warning Label
         self.label_warning.grid(row=4, column=0, columnspan=3, sticky=tk.W, padx=5, pady=2)
 
         # Step 1: Clear old data
         tk.Label(self.frame_right_info,
-                 font=self.font_step_title,
-                 text="Step 1: Clear face photos").grid(row=5, column=0, columnspan=2, sticky=tk.W, padx=5, pady=20)
+                font=self.font_step_title,
+                text="Step 1: Clear face photos").grid(row=5, column=0, sticky=tk.W, padx=5, pady=10)
         tk.Button(self.frame_right_info,
-                  text='Clear',
-                  command=self.GUI_clear_data).grid(row=6, column=0, columnspan=3, sticky=tk.W, padx=5, pady=2)
+                text='Clear',
+                command=self.GUI_clear_data).grid(row=5, column=1, sticky=tk.W, padx=5, pady=10)
 
-        # Step 2: Input name and create folders for face
+        # Step 2: Input Section Name
+        tk.Label(self.frame_right_info, font=self.font_step_title, text="Step 2: Input Section Name").grid(
+            row=6, column=0, sticky=tk.W, padx=5, pady=10)
+        tk.Label(self.frame_right_info, text="Section: ").grid(row=7, column=0, sticky=tk.W, padx=5, pady=2)
+        self.input_section_name.grid(row=7, column=1, sticky=tk.W, padx=5, pady=2)
+        tk.Button(self.frame_right_info, text='Input', command=self.GUI_get_section_name).grid(row=7, column=2, padx=5, pady=2)
+
+        # Step 3: Input Name
         tk.Label(self.frame_right_info,
-                 font=self.font_step_title,
-                 text="Step 2: Input name").grid(row=7, column=0, columnspan=2, sticky=tk.W, padx=5, pady=20)
-
-        tk.Label(self.frame_right_info, text="Name: ").grid(row=8, column=0, sticky=tk.W, padx=5, pady=0)
-        self.input_name.grid(row=8, column=1, sticky=tk.W, padx=0, pady=2)
-
+                font=self.font_step_title,
+                text="Step 3: Input name").grid(row=8, column=0, sticky=tk.W, padx=5, pady=10)
+        tk.Label(self.frame_right_info, text="Name: ").grid(row=9, column=0, sticky=tk.W, padx=5, pady=2)
+        self.input_name.grid(row=9, column=1, sticky=tk.W, padx=5, pady=2)
         tk.Button(self.frame_right_info,
-                  text='Input',
-                  command=self.GUI_get_input_name).grid(row=8, column=2, padx=5)
+                text='Input',
+                command=self.GUI_get_input_name).grid(row=9, column=2, padx=5, pady=2)
 
-        # Step 3: Save current face in frame
+        # Step 4: Save face image
         tk.Label(self.frame_right_info,
-                 font=self.font_step_title,
-                 text="Step 3: Save face image").grid(row=9, column=0, columnspan=2, sticky=tk.W, padx=5, pady=20)
-
+                font=self.font_step_title,
+                text="Step 4: Save face image").grid(row=10, column=0, sticky=tk.W, padx=5, pady=10)
         tk.Button(self.frame_right_info,
-                  text='Save current face',
-                  command=self.save_current_face).grid(row=10, column=0, columnspan=3, sticky=tk.W)
+                text='Save current face',
+                command=self.save_current_face).grid(row=11, column=0, columnspan=2, sticky=tk.W, padx=5, pady=10)
 
         # Show log in GUI
-        self.log_all.grid(row=11, column=0, columnspan=20, sticky=tk.W, padx=5, pady=20)
+        self.log_all.grid(row=12, column=0, columnspan=3, sticky=tk.W, padx=5, pady=20)
 
+        # Final pack
         self.frame_right_info.pack()
+
 
     # Mkdir for saving photos and csv
     def pre_work_mkdir(self):
@@ -153,18 +177,37 @@ class Face_Register:
 
     # Start from person_x+1
     def check_existing_faces_cnt(self):
-        if os.listdir("data/data_faces_from_camera/"):
-            # Get the order of latest person
-            person_list = os.listdir("data/data_faces_from_camera/")
-            person_num_list = []
-            for person in person_list:
-                person_order = person.split('_')[1].split('_')[0]
-                person_num_list.append(int(person_order))
-            self.existing_faces_cnt = max(person_num_list)
+        self.existing_faces_cnt = 0  # Reset count
 
-        # Start from person_1
+        # Check if "data/data_faces_from_camera/" exists
+        if os.path.exists(self.path_photos_from_camera):
+            # List all section folders
+            section_folders = os.listdir(self.path_photos_from_camera)
+            
+            # Iterate through each section folder
+            for section in section_folders:
+                section_path = os.path.join(self.path_photos_from_camera, section)
+                
+                # Ensure it's a directory
+                if os.path.isdir(section_path):
+                    # List all person_x folders inside the section
+                    person_folders = os.listdir(section_path)
+                    
+                    # Extract the person numbers to find the maximum
+                    for person in person_folders:
+                        if person.startswith("person_"):
+                            try:
+                                # Extract person number (e.g., person_1_name -> 1)
+                                person_number = int(person.split('_')[1])
+                                self.existing_faces_cnt = max(self.existing_faces_cnt, person_number)
+                            except (IndexError, ValueError):
+                                # Handle malformed folder names
+                                logging.warning(f"Skipped invalid folder name: {person}")
         else:
-            self.existing_faces_cnt = 0
+            logging.warning("The directory 'data/data_faces_from_camera/' does not exist.")
+
+        logging.info("Total persons found: %d", self.existing_faces_cnt)
+        
 
     # Update FPS of Video stream
     def update_fps(self):
@@ -183,11 +226,11 @@ class Face_Register:
         #  Create the folders for saving faces
         self.existing_faces_cnt += 1
         if self.input_name_char:
-            self.current_face_dir = self.path_photos_from_camera + \
+            self.current_face_dir =  self.section_folder_path +"/" + \
                                     "person_" + str(self.existing_faces_cnt) + "_" + \
                                     self.input_name_char
         else:
-            self.current_face_dir = self.path_photos_from_camera + \
+            self.current_face_dir =  self.section_folder_path + "/" + \
                                     "person_" + str(self.existing_faces_cnt)
         os.makedirs(self.current_face_dir)
         self.log_all["text"] = "\"" + self.current_face_dir + "/\" created!"
@@ -293,3 +336,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
