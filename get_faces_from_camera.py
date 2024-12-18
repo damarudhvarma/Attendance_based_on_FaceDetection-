@@ -136,9 +136,9 @@ class Face_Register:
                 command=self.GUI_clear_data).grid(row=5, column=1, sticky=tk.W, padx=5, pady=10)
 
         # Step 2: Input Section Name
-        tk.Label(self.frame_right_info, font=self.font_step_title, text="Step 2: Input Section Name").grid(
+        tk.Label(self.frame_right_info, font=self.font_step_title, text="Step 2: Input Roll Number").grid(
             row=6, column=0, sticky=tk.W, padx=5, pady=10)
-        tk.Label(self.frame_right_info, text="Section: ").grid(row=7, column=0, sticky=tk.W, padx=5, pady=2)
+        tk.Label(self.frame_right_info, text="RollNo.: ").grid(row=7, column=0, sticky=tk.W, padx=5, pady=2)
         self.input_section_name.grid(row=7, column=1, sticky=tk.W, padx=5, pady=2)
         tk.Button(self.frame_right_info, text='Input', command=self.GUI_get_section_name).grid(row=7, column=2, padx=5, pady=2)
 
