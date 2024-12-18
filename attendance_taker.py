@@ -21,10 +21,17 @@ face_reco_model = dlib.face_recognition_model_v1("data/data_dlib/dlib_face_recog
 conn = sqlite3.connect("attendance.db")
 cursor = conn.cursor()
 
-# Create a table for attendance (adding section column)
-current_date = datetime.datetime.now().strftime("%Y_%m_%d")  # Replace hyphens with underscores
+# Create a table for attendance with Rollno, Name, Section, Date, and Time columns
 table_name = "attendance" 
-create_table_sql = f"CREATE TABLE IF NOT EXISTS {table_name} (name TEXT, section TEXT, time TEXT, date DATE, UNIQUE(name, date, section))"
+create_table_sql = f"""
+CREATE TABLE IF NOT EXISTS {table_name} (
+    rollno TEXT, 
+    name TEXT, 
+    section TEXT DEFAULT 'CSE-B', 
+    date DATE, 
+    time TIME,
+    UNIQUE(rollno, date)
+)"""
 cursor.execute(create_table_sql)
 
 # Commit changes and close the connection
@@ -48,8 +55,8 @@ class Face_Recognizer:
 
         # Known face features and names
         self.face_features_known_list = []
-        self.face_name_known_list = []
-        self.face_section_known_list = []  # To store section info
+        self.face_rollno_known_list = []  # To store roll numbers
+        self.face_name_known_list = []  # To store names
 
         # Centroid positions of ROI
         self.last_frame_face_centroid_list = []
@@ -80,12 +87,13 @@ class Face_Recognizer:
 
             for i in range(csv_rd.shape[0]):
                 features_someone_arr = []
-                # Extract section and name(s)
-                section = csv_rd.iloc[i][0]
+                
+                # Extract roll number and name
+                rollno = csv_rd.iloc[i][0]
                 name = csv_rd.iloc[i][1]
-                section_name = f"{section}_{name}"
-                self.face_name_known_list.append(section_name)
-                self.face_section_known_list.append(section)  # Store section separately
+                
+                self.face_rollno_known_list.append(rollno)
+                self.face_name_known_list.append(name)
 
                 # Extract features starting from the 3rd column
                 for j in range(2, 130):
@@ -104,23 +112,23 @@ class Face_Recognizer:
             return 0
 
     # Insert attendance into the database
-    def attendance(self, section, name):
+    def attendance(self, rollno, name):
         current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        current_time = datetime.datetime.now().strftime('%H:%M:%S')
         conn = sqlite3.connect("attendance.db")
         cursor = conn.cursor()
 
         # Check for existing entry
-        cursor.execute("SELECT * FROM attendance WHERE name = ? AND date = ? AND section = ?", (name, current_date, section))
+        cursor.execute("SELECT * FROM attendance WHERE rollno = ? AND date = ?", (rollno, current_date))
         existing_entry = cursor.fetchone()
 
         if existing_entry:
-            print(f"{name} is already marked as present for {current_date} in section {section}")
+            print(f"{name} (Roll No: {rollno}) is already marked as present for {current_date}")
         else:
-            current_time = datetime.datetime.now().strftime('%H:%M:%S')
-            cursor.execute("INSERT INTO attendance (name, section, time, date) VALUES (?, ?, ?, ?)",
-                           (name, section, current_time, current_date))
+            cursor.execute("INSERT INTO attendance (rollno, name, section, date, time) VALUES (?, ?, ?, ?, ?)",
+                           (rollno, name, 'CSE-B', current_date, current_time))
             conn.commit()
-            print(f"{name} marked as present for {current_date} at {current_time} in section {section}")
+            print(f"{name} (Roll No: {rollno}) marked as present for {current_date} at {current_time}")
 
         conn.close()
 
@@ -153,28 +161,25 @@ class Face_Recognizer:
                         self.current_frame_face_feature_list.append(face_feature)
 
                         min_e_distance = float("inf")
-                        person_name = "unknown"
-                        section = "unknown"  # Default section is unknown
+                        rollno = "unknown"
+                        name = "unknown"
 
                         # Compare with known faces
                         for j in range(len(self.face_features_known_list)):
                             e_distance = self.return_euclidean_distance(face_feature, self.face_features_known_list[j])
                             if e_distance < min_e_distance:
                                 min_e_distance = e_distance
-                                person_name = self.face_name_known_list[j]
-                                section = self.face_section_known_list[j]  # Get the section
+                                rollno = self.face_rollno_known_list[j]
+                                name = self.face_name_known_list[j]
 
                         if min_e_distance < 0.6:  # Recognition threshold
-                            self.current_frame_face_name_list.append(person_name)
-                            self.attendance(section, person_name)  # Mark attendance
+                            self.current_frame_face_name_list.append(name)
+                            self.attendance(rollno, name)  # Mark attendance
                         else:
                             self.current_frame_face_name_list.append("unknown")
 
-                        # Draw face rectangle and name
-                        img_rd = cv2.rectangle(img_rd, (face.left(), face.top()), (face.right(), face.bottom()),
-                                               (255, 255, 255), 2)
-                        img_rd = cv2.putText(img_rd, person_name, (face.left(), face.top() - 10),
-                                             self.font, 0.8, (0, 255, 255), 1, cv2.LINE_AA)
+                        img_rd = cv2.rectangle(img_rd, (face.left(), face.top()), (face.right(), face.bottom()), (255, 255, 255), 2)
+                        img_rd = cv2.putText(img_rd, name, (face.left(), face.top() - 10), self.font, 0.8, (0, 255, 255), 1, cv2.LINE_AA)
 
                 cv2.imshow("camera", img_rd)
 

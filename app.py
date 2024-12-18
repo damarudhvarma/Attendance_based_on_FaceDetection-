@@ -17,7 +17,7 @@ def attendance():
     conn = sqlite3.connect('attendance.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT name, time FROM attendance WHERE date = ?", (formatted_date,))
+    cursor.execute("SELECT rollno, name, section, time FROM attendance WHERE date = ?", (formatted_date,))
     attendance_data = cursor.fetchall()
 
     conn.close()
