@@ -57,19 +57,13 @@
         </div>
         <hr>
 
-        <!-- Form for Showing Attendance -->
+        <!-- Form for Showing Attendance and Class Attendance -->
         <form action="/attendance" method="POST" id="attn-form">
             <label for="selected_date">Select Date: </label>
             <input type="date" id="selected_date" name="selected_date" required value="{{ selected_date }}">
             <div class="btn-container">
-                <button type="submit" class="btn btn-outline-success">Show Attendance</button>
-            </div>
-        </form>
-
-        <!-- Form for Class Attendance -->
-        <form action="/class-attendance" method="POST" id="class-attn-form" style="margin-top: 20px;">
-            <div class="btn-container">
-                <button type="submit" class="btn btn-outline-primary">Class Attendance</button>
+                <button type="submit" formaction="/attendance" class="btn btn-outline-success">Show Attendance</button>
+                <button type="submit" formaction="/class-attendance" class="btn btn-outline-primary">Class Attendance</button>
             </div>
         </form>
 
