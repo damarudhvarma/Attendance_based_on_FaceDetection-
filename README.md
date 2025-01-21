@@ -44,17 +44,17 @@ Download the required Dlib models from the [Google Drive link](https://drive.goo
    
    This will create a folder with captured face images for each individual.
 
-2. *Register Student Details*  
+2. *Extract Face Features*  
+   Extract 128D face features from the dataset and save them in a CSV file:  
+   ```
+   python features_extraction.py
+   ```
+3. *Register Student Details*  
    Register student details (Roll No, Name, Section, etc.) in the database by running:  
    ```
    python class_registration.py
    ```
 
-3. *Extract Face Features*  
-   Extract 128D face features from the dataset and save them in a CSV file:  
-   ```
-   python features_extraction.py
-   ```
    
 
 4. *Mark Attendance*  
