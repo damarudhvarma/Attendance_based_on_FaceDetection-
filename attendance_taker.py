@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS attendance (
     name TEXT, 
     section TEXT DEFAULT 'CSE-B', 
     date DATE, 
-    time TIME,
+    login_time TIME,
+    logout_time TIME DEFAULT NULL,
     UNIQUE(rollno, date)
 )
 """)
@@ -36,10 +37,9 @@ class Face_Recognizer:
         self.face_features_known_list = []
         self.face_rollno_known_list = []
         self.face_name_known_list = []
-        self.last_attendance_time = time.time()  # Timer for attendance marking
-        self.last_marked_faces = set()  # Store last recognized faces
+        self.last_attendance_time = time.time()
+        self.last_marked_faces = {}
 
-    # Read features from "features_all.csv"
     def get_face_database(self):
         if os.path.exists("data/features_all.csv"):
             csv_rd = pd.read_csv("data/features_all.csv", header=None)
@@ -56,30 +56,37 @@ class Face_Recognizer:
             logging.warning("'features_all.csv' not found!")
             return False
 
-    # Mark attendance in the database
     def mark_attendance(self, rollno, name):
         current_date = datetime.datetime.now().strftime('%Y-%m-%d')
         current_time = datetime.datetime.now().strftime('%H:%M:%S')
 
         conn = sqlite3.connect("attendance.db")
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM attendance WHERE rollno = ? AND date = ?", (rollno, current_date))
-        if cursor.fetchone():
-            print(f"{name} (Roll No: {rollno}) is already marked present for {current_date}")
-        else:
-            cursor.execute("INSERT INTO attendance (rollno, name, section, date, time) VALUES (?, ?, ?, ?, ?)",
-                           (rollno, name, 'CSE-B', current_date, current_time))
-            conn.commit()
-            print(f"{name} (Roll No: {rollno}) marked as present at {current_time}")
-            print("✅ Marked Present, Next Student ➡️")
+        cursor.execute("SELECT login_time FROM attendance WHERE rollno = ? AND date = ?", (rollno, current_date))
+        record = cursor.fetchone()
 
+        if record:
+            login_time = datetime.datetime.strptime(record[0], '%H:%M:%S')
+            elapsed_time = (datetime.datetime.strptime(current_time, '%H:%M:%S') - login_time).total_seconds()
+            
+            if elapsed_time >= 20 and rollno not in self.last_marked_faces:  # update time elapsed here
+                cursor.execute("UPDATE attendance SET logout_time = ? WHERE rollno = ? AND date = ?", (current_time, rollno, current_date))
+                print(f"{name} (Roll No: {rollno}) logged out at {current_time}")
+            else:
+                print(f"{name} (Roll No: {rollno}) cannot logout before 5 minutes")
+        else:
+            cursor.execute("INSERT INTO attendance (rollno, name, section, date, login_time) VALUES (?, ?, ?, ?, ?)",
+                           (rollno, name, 'CSE-B', current_date, current_time))
+            print(f"{name} (Roll No: {rollno}) logged in at {current_time}")
+            self.last_marked_faces[rollno] = current_time  # Store login time
+        
+        conn.commit()
         conn.close()
 
     @staticmethod
     def return_euclidean_distance(feature_1, feature_2):
         return np.linalg.norm(np.array(feature_1) - np.array(feature_2))
 
-    # Process video stream
     def process(self, stream):
         if not self.get_face_database():
             return
@@ -100,7 +107,6 @@ class Face_Recognizer:
                     min_distance = float("inf")
                     best_rollno, best_name = "unknown", "unknown"
 
-                    # Compare with known faces
                     for j in range(len(self.face_features_known_list)):
                         e_distance = self.return_euclidean_distance(face_feature, self.face_features_known_list[j])
                         if e_distance < min_distance:
@@ -108,30 +114,27 @@ class Face_Recognizer:
                             best_rollno = self.face_rollno_known_list[j]
                             best_name = self.face_name_known_list[j]
 
-                    if min_distance < 0.6:  # Recognition threshold
+                    if min_distance < 0.6:
                         cv2.rectangle(img_rd, (face.left(), face.top()), (face.right(), face.bottom()), (0, 255, 0), 2)
                         cv2.putText(img_rd, best_name, (face.left(), face.top() - 10), self.font, 0.8, (0, 255, 255), 1)
-
-                        # Take attendance only once every 5 seconds
-                        if current_time - self.last_attendance_time >= 5 and best_rollno not in self.last_marked_faces:
+                        
+                        if current_time - self.last_attendance_time >= 5:
                             self.mark_attendance(best_rollno, best_name)
-                            self.last_attendance_time = current_time  # Reset timer
-                            self.last_marked_faces.add(best_rollno)  # Prevent immediate re-marking
-
+                            self.last_attendance_time = current_time
                     else:
                         cv2.rectangle(img_rd, (face.left(), face.top()), (face.right(), face.bottom()), (0, 0, 255), 2)
                         cv2.putText(img_rd, "Unknown", (face.left(), face.top() - 10), self.font, 0.8, (0, 0, 255), 1)
 
             cv2.imshow("Attendance System", img_rd)
 
-            if cv2.waitKey(1) == ord('q'):  # Press 'q' to quit
+            if cv2.waitKey(1) == ord('q'):
                 break
 
         stream.release()
         cv2.destroyAllWindows()
 
     def run(self):
-        cap = cv2.VideoCapture(0)  # Open webcam
+        cap = cv2.VideoCapture(0)
         self.process(cap)
 
 

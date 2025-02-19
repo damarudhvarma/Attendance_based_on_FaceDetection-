@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -18,7 +18,7 @@ def attendance():
     cursor = conn.cursor()
 
     # Fetch attendance data for the selected date
-    cursor.execute("SELECT rollno, name, section, time FROM attendance WHERE date = ?", (formatted_date,))
+    cursor.execute("SELECT rollno, name, section, login_time, logout_time FROM attendance WHERE date = ?", (formatted_date,))
     attendance_data = cursor.fetchall()
 
     conn.close()

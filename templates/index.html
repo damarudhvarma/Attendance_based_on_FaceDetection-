@@ -99,23 +99,23 @@
                     <th scope="col">Roll No</th>
                     <th scope="col">Name</th>
                     <th scope="col">Section</th>
-                    <th scope="col">Time</th>
+                    <th scope="col">Login Time</th>
+                    <th scope="col">Logout Time</th>
                 </tr>
             </thead>
             <tbody>
-                {% for rollno, name, section, time in attendance_data %}
+                {% for rollno, name, section, login_time, logout_time in attendance_data %}
                 <tr>
                     <td>{{ rollno }}</td>
                     <td>{{ name }}</td>
                     <td>{{ section }}</td>
-                    <td>{{ time }}</td>
+                    <td>{{ login_time }}</td>
+                    <td>{{ logout_time if logout_time else 'Still Logged In' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        {% endif %}
-
-        {% if class_attendance_data %}
+        {% endif %}{% if class_attendance_data %}
         <h2>Class Attendance</h2>
         <table class="table table-bordered">
             <thead class="table-dark">
