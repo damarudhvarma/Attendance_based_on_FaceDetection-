@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ```
 
 ### *3. Download Dlib Models*
-Download the required Dlib models from the [Google Drive link][(https://drive.google.com/drive/folders/12It2jeNQOxwStBxtagL1vvIJokoz-DL4?usp=sharing](https://drive.google.com/drive/folders/1h07D2K8SQ2AjgMPUs2KKS52u8xT3Uzqy?usp=sharing)).  
+Download the required Dlib models from the [Google Drive link](https://drive.google.com/drive/folders/1h07D2K8SQ2AjgMPUs2KKS52u8xT3Uzqy?usp=sharing).  
 - Place the downloaded data folder inside the root directory of the project.
 
 ---
