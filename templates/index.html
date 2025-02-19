@@ -145,7 +145,14 @@
                     <td colspan="3" class="text-end"><strong>Total Present:</strong></td>
                     <td class="text-center"><strong>{{ count.value }}</strong></td>
                 </tr>
-
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Total Absent:</strong></td>
+                    <td class="text-center"><strong>{{ class_attendance_data|length - count.value }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Total Students:</strong></td>
+                    <td class="text-center"><strong>{{ class_attendance_data|length }}</strong></td>
+                </tr>
             </tbody>
         </table>
         {% endif %}
